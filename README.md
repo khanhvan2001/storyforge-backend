@@ -30,12 +30,15 @@ Tạo file `.env` trong thư mục `storyforge-backend` với nội dung:
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/storyforge-db"
 JWT_SECRET="your-secret-key-here"
-OPENAI_API_KEY="" # Optional: Lấy tại https://platform.openai.com/api-keys
+
+# Google Gemini Configuration (Free Tier)
+GEMINI_API_KEY="" # Lấy tại https://aistudio.google.com/app/apikey (miễn phí)
 ```
 
 **Lưu ý:** 
-- Nếu không có `OPENAI_API_KEY`, API sẽ trả về mock data
-- Để lấy OpenAI API key: https://platform.openai.com/api-keys
+- Nếu không có `GEMINI_API_KEY`, API sẽ trả về mock data
+- **Google Gemini**: Miễn phí, sử dụng model `gemini-2.5-flash` (hard-coded trong code)
+- Lấy API key miễn phí tại: https://aistudio.google.com/app/apikey
 
 ### 4. Chạy migrations và seed data
 

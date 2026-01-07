@@ -1,47 +1,50 @@
 import { Injectable } from '@nestjs/common';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 @Injectable()
 export class AiService {
-  private openai: OpenAI | null = null;
+  private gemini: GoogleGenerativeAI | null = null;
+  private readonly GEMINI_MODEL = 'gemini-2.5-flash';
 
-  private getOpenAIClient(): OpenAI | null {
-    if (!this.openai && process.env.OPENAI_API_KEY) {
-      this.openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
+  private getGeminiClient(): GoogleGenerativeAI | null {
+    if (!this.gemini && process.env.GEMINI_API_KEY) {
+      this.gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     }
-    return this.openai;
+    return this.gemini;
   }
 
   async generate(rawInput: string) {
     try {
-      const client = this.getOpenAIClient();
+      const client = this.getGeminiClient();
       if (!client) {
-        throw new Error('OpenAI API key not configured');
+        throw new Error('Gemini API key not configured');
       }
-      const completion = await client.chat.completions.create({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a product manager. Generate a user story from the input. Return JSON with: title (string), user_story (string), acceptance_criteria (string array).',
-          },
-          {
-            role: 'user',
-            content: rawInput,
-          },
-        ],
-        response_format: { type: 'json_object' },
+
+      const model = client.getGenerativeModel({
+        model: this.GEMINI_MODEL,
       });
 
-      const content = completion.choices[0].message.content;
+      const prompt = `You are an Agile Product Owner. Generate a user story from the input. Respond in the same language as the input.
+
+Return JSON with: title (string), user_story (string), acceptance_criteria (string array).
+
+Input: ${rawInput}
+
+Important: Use the same language as the input text. Return only valid JSON, no other text.`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const content = response.text();
+
       if (!content) {
-        throw new Error('No content from OpenAI');
+        throw new Error('No content from Gemini');
       }
-      return JSON.parse(content);
+
+      // Clean up the response (remove markdown code blocks if present)
+      const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      return JSON.parse(cleanedContent);
     } catch (error) {
+      console.error('AI generation error:', error);
       return {
         title: 'Sample Story',
         user_story: 'As a user, I want to perform an action so that I can achieve a goal.',
