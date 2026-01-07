@@ -48,11 +48,7 @@ npx prisma db seed
 ### 5. Khởi động server
 
 ```bash
-# Development mode (với hot reload)
-npm run start:dev
-
-# Production mode
-npm run start:prod
+npm run start
 ```
 
 Server sẽ chạy tại: `http://localhost:3000`
