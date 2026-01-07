@@ -29,8 +29,6 @@ Tạo file `.env` trong thư mục `storyforge-backend` với nội dung:
 
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/storyforge-db"
-JWT_SECRET="your-secret-key-here"
-
 # Google Gemini Configuration (Free Tier)
 GEMINI_API_KEY="" # Lấy tại https://aistudio.google.com/app/apikey (miễn phí)
 ```
