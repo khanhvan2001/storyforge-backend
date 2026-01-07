@@ -25,7 +25,18 @@ export class DocumentController {
   @Post()
   @ApiOperation({ summary: 'Create a new document' })
   @ApiBody({ type: CreateDocumentDto })
-  @ApiResponse({ status: 201, description: 'Document created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Document created successfully',
+    example: {
+      id: 1,
+      title: 'API Documentation',
+      content_text: 'This document describes the API endpoints...',
+      story_id: 1,
+      created_at: '2024-01-01T00:00:00.000Z',
+      updated_at: '2024-01-01T00:00:00.000Z',
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Request() req, @Body() body: CreateDocumentDto) {
     return this.documentService.create(req.user.userId, body);
@@ -33,7 +44,20 @@ export class DocumentController {
 
   @Get()
   @ApiOperation({ summary: 'Get all documents for the current user' })
-  @ApiResponse({ status: 200, description: 'Returns all documents' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all documents',
+    example: [
+      {
+        id: 1,
+        title: 'API Documentation',
+        content_text: 'This document describes the API endpoints...',
+        story_id: 1,
+        created_at: '2024-01-01T00:00:00.000Z',
+        updated_at: '2024-01-01T00:00:00.000Z',
+      },
+    ],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   findAll(@Request() req) {
     return this.documentService.findAll(req.user.userId);
@@ -42,7 +66,18 @@ export class DocumentController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a document by ID' })
   @ApiParam({ name: 'id', type: 'number', description: 'Document ID' })
-  @ApiResponse({ status: 200, description: 'Returns the document' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the document',
+    example: {
+      id: 1,
+      title: 'API Documentation',
+      content_text: 'This document describes the API endpoints...',
+      story_id: 1,
+      created_at: '2024-01-01T00:00:00.000Z',
+      updated_at: '2024-01-01T00:00:00.000Z',
+    },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Document not found' })
   findOne(@Request() req, @Param('id', ParseIntPipe) id: number) {

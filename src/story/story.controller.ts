@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DocumentService } from '../document/document.service';
 import { StoryService } from './story.service';
 import { CreateStoryDto, UpdateStoryDto } from '../dto/story.dto';
+import { StoryResponseDto } from '../dto/story-response.dto';
 
 @ApiTags('stories')
 @ApiBearerAuth('JWT-auth')
@@ -29,7 +30,11 @@ export class StoryController {
   @Post()
   @ApiOperation({ summary: 'Create a new story' })
   @ApiBody({ type: CreateStoryDto })
-  @ApiResponse({ status: 201, description: 'Story created successfully' })
+  @ApiResponse({
+    status: 201,
+    description: 'Story created successfully',
+    type: StoryResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Request() req, @Body() body: CreateStoryDto) {
     return this.storyService.create(req.user.userId, body);
@@ -37,7 +42,11 @@ export class StoryController {
 
   @Get()
   @ApiOperation({ summary: 'Get all stories for the current user' })
-  @ApiResponse({ status: 200, description: 'Returns all stories' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all stories',
+    type: [StoryResponseDto],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   findAll(@Request() req) {
     return this.storyService.findAll(req.user.userId);
@@ -46,7 +55,20 @@ export class StoryController {
   @Get(':id/documents')
   @ApiOperation({ summary: 'Get all documents for a story' })
   @ApiParam({ name: 'id', type: 'number', description: 'Story ID' })
-  @ApiResponse({ status: 200, description: 'Returns all documents for the story' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all documents for the story',
+    example: [
+      {
+        id: 1,
+        title: 'API Documentation',
+        content_text: 'This document describes the API endpoints...',
+        story_id: 1,
+        created_at: '2024-01-01T00:00:00.000Z',
+        updated_at: '2024-01-01T00:00:00.000Z',
+      },
+    ],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Story not found' })
   findDocuments(@Request() req, @Param('id', ParseIntPipe) id: number) {
@@ -56,7 +78,11 @@ export class StoryController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a story by ID' })
   @ApiParam({ name: 'id', type: 'number', description: 'Story ID' })
-  @ApiResponse({ status: 200, description: 'Returns the story' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the story',
+    type: StoryResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Story not found' })
   findOne(@Request() req, @Param('id', ParseIntPipe) id: number) {
@@ -67,7 +93,11 @@ export class StoryController {
   @ApiOperation({ summary: 'Update a story' })
   @ApiParam({ name: 'id', type: 'number', description: 'Story ID' })
   @ApiBody({ type: UpdateStoryDto })
-  @ApiResponse({ status: 200, description: 'Story updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Story updated successfully',
+    type: StoryResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Story not found' })
   update(@Request() req, @Param('id', ParseIntPipe) id: number, @Body() body: UpdateStoryDto) {
