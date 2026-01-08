@@ -1,192 +1,188 @@
-# Storyforge Backend - AI Driven Storyforge
+# Storyforge Backend - AI Driven User Story Generator
 
-NestJS backend application với PostgreSQL, Prisma, JWT authentication và AI integration.
+Backend cho hệ thống AI hỗ trợ tạo User Story, trong đó AI đóng vai trò đề xuất và người dùng quyết định bản cuối.
 
-## Yêu cầu
+---
+
+## Core Idea
+
+- AI đề xuất User Story theo chuẩn Agile.
+- Người dùng toàn quyền chỉnh sửa trước khi xác nhận.
+- Hệ thống lưu song song:
+  - generatedUserStory: bản nháp do AI sinh.
+  - finalUserStory: bản cuối do user chỉnh (nguồn dữ liệu chính).
+
+---
+
+## Tech Stack
+
+- Backend: NestJS
+- Database: PostgreSQL 15
+- ORM: Prisma
+- Auth: JWT
+- AI: Google Gemini (gemini-2.5-flash, free tier)
+- Naming: camelCase (code/API) và snake_case (database)
+
+---
+
+## Requirements
 
 - Node.js >= 20.11.1
 - Docker & Docker Compose
 - npm hoặc yarn
 
-## Cài đặt
+---
 
-### 1. Clone repository và cài đặt dependencies
+## Setup & Run
 
+### 1. Install dependencies
 ```bash
-cd storyforge-backend
 npm install
 ```
 
-### 2. Khởi động PostgreSQL với Docker
-
+### 2. Start PostgreSQL
 ```bash
 docker-compose up -d
 ```
 
-### 3. Tạo file `.env`
-
-Tạo file `.env` trong thư mục `storyforge-backend` với nội dung:
-
+### 3. Create .env file
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/storyforge-db"
-# Google Gemini Configuration (Free Tier)
-GEMINI_API_KEY="" # Lấy tại https://aistudio.google.com/app/apikey (miễn phí)
+GEMINI_API_KEY=""
 ```
 
-**Lưu ý:** 
-- Nếu không có `GEMINI_API_KEY`, API sẽ trả về mock data
-- **Google Gemini**: Miễn phí, sử dụng model `gemini-2.5-flash` (hard-coded trong code)
-- Lấy API key miễn phí tại: https://aistudio.google.com/app/apikey
-- Tất cả API request/response fields đều sử dụng **camelCase** (ví dụ: `rawInput`, `aiOutputJson`, `contentText`)
+Nếu không có GEMINI_API_KEY, hệ thống sẽ trả về mock data để demo.
 
-### 4. Chạy migrations và seed data
-
+### 4. Migrate & seed database
 ```bash
 npx prisma migrate dev
 npx prisma db seed
 ```
 
-### 5. Khởi động server
-
+### 5. Start server
 ```bash
 npm run start
 ```
 
-Server sẽ chạy tại: `http://localhost:3000`
+Server chạy tại http://localhost:3000  
+Swagger tại http://localhost:3000/swagger
 
-## API Documentation (Swagger)
+---
 
-Swagger UI documentation có sẵn tại:
-- **Swagger UI:** `http://localhost:3000/swagger`
+## Authentication
 
-Tại đây bạn có thể:
-- Xem tất cả API endpoints
-- Test API trực tiếp từ browser
-- Xem request/response schemas
-- Authenticate bằng JWT token (click "Authorize" button)
+- POST /auth/register
+- POST /auth/login
 
-## API Endpoints
+Response:
+```json
+{ "accessToken": "string" }
+```
 
-**Lưu ý:** Tất cả request và response fields đều sử dụng **camelCase** format.
+---
 
-### Authentication
-- `POST /auth/register` - Đăng ký user mới
-  - Request: `{ username: string, password: string }`
-  - Response: `{ accessToken: string }`
-- `POST /auth/login` - Đăng nhập
-  - Request: `{ username: string, password: string }`
-  - Response: `{ accessToken: string }`
+## Core API - Stories
 
-### Stories (JWT protected)
-- `GET /stories` - Lấy danh sách stories
-- `POST /stories` - Tạo story mới
-  - Request: `{ title: string, rawInput: string, aiOutputJson: object, status: string }`
-- `GET /stories/:id` - Lấy chi tiết story
-- `PUT /stories/:id` - Cập nhật story
-  - Request: `{ title?: string, rawInput?: string, aiOutputJson?: object, status?: string }`
-- `DELETE /stories/:id` - Xóa story
-- `GET /stories/:id/documents` - Lấy documents của story
+### POST /stories/generate (Main endpoint)
 
-### Documents (JWT protected)
-- `GET /documents` - Lấy danh sách documents
-- `POST /documents` - Tạo document mới
-  - Request: `{ title: string, contentText: string, storyId: number }`
-- `GET /documents/:id` - Lấy chi tiết document
-- `PUT /documents/:id` - Cập nhật document
-  - Request: `{ title?: string, contentText?: string }`
-- `DELETE /documents/:id` - Xóa document
+Sinh User Story từ idea, user requirements, file đính kèm và link tham khảo.
 
-### AI
-- `POST /ai/generate` - Generate user story từ raw input
-  - Request: `{ rawInput: string }`
-  - Response: `{ title: string, userStory: string, acceptanceCriteria: string[] }`
+Request (multipart/form-data):
+
+- idea (string, required)
+- userRequirements (string, required)
+- referenceLinks (string, optional, tối đa 5 links, phân cách bằng dấu phẩy)
+- files (file[], optional, tối đa 10 files)
+
+Supported file types: .txt, .md, .pdf, .docx
+
+Response (rút gọn):
+```json
+{
+  "id": 1,
+  "generatedUserStory": {
+    "userStory": "...",
+    "acceptanceCriteria": ["..."],
+    "notes": "..."
+  },
+  "finalUserStory": {
+    "userStory": "...",
+    "acceptanceCriteria": ["..."],
+    "notes": "..."
+  },
+  "status": "DRAFT"
+}
+```
+
+finalUserStory là bản được user chỉnh sửa và sử dụng chính thức.
+
+---
+
+### Other Story APIs
+
+- GET /stories
+- GET /stories/:id
+- PUT /stories/:id (update finalUserStory và status)
+- DELETE /stories/:id
+
+---
+
+## Documents (Optional)
+
+Các endpoint này không nằm trong flow generate chính.
+
+- GET /documents
+- POST /documents
+- GET /documents/:id
+- PUT /documents/:id
+- DELETE /documents/:id
+
+---
 
 ## Seed Data
 
-Project đã có seed data với:
-- 1 admin user: `admin` / `123456`
-- 10 normal users (xem `prisma/seed.ts`)
+- admin / 123456
+- 10 users demo (xem prisma/seed.ts)
 
-Tất cả users đều dùng password: `123456`
+---
 
-## Database
+## Database Notes
 
-- **Database:** PostgreSQL 15
-- **ORM:** Prisma
-- **Migrations:** `npx prisma migrate dev`
-- **Prisma Studio:** `npx prisma studio` (GUI để xem database)
-- **Schema:** Prisma models sử dụng camelCase, database columns sử dụng snake_case (tự động map qua `@map`)
+- Prisma migrate: npx prisma migrate dev
+- Prisma Studio: npx prisma studio
+- Migration là lịch sử bất biến, không sửa migration cũ
 
-## Scripts
+---
 
-```bash
-# Development
-npm run start:dev
-
-# Production
-npm run start:prod
-
-# Build
-npm run build
-
-# Lint
-npm run lint
-
-# Test
-npm run test
-```
-
-## Cấu trúc Project
+## Project Structure (Simplified)
 
 ```
-storyforge-backend/
-├── src/
-│   ├── auth/          # JWT authentication
-│   │   ├── auth.controller.ts
-│   │   ├── auth.service.ts
-│   │   ├── auth.module.ts
-│   │   ├── jwt-auth.guard.ts
-│   │   └── jwt.strategy.ts
-│   ├── story/          # Story CRUD
-│   │   ├── story.controller.ts
-│   │   ├── story.service.ts
-│   │   └── story.module.ts
-│   ├── document/       # Document CRUD
-│   │   ├── document.controller.ts
-│   │   ├── document.service.ts
-│   │   └── document.module.ts
-│   ├── ai/             # AI integration
-│   │   ├── ai.controller.ts
-│   │   ├── ai.service.ts
-│   │   └── ai.module.ts
-│   ├── dto/            # Data Transfer Objects
-│   │   ├── auth.dto.ts
-│   │   ├── auth-response.dto.ts
-│   │   ├── story.dto.ts
-│   │   ├── story-response.dto.ts
-│   │   ├── document.dto.ts
-│   │   ├── document-response.dto.ts
-│   │   ├── ai.dto.ts
-│   │   └── ai-response.dto.ts
-│   ├── app.controller.ts
-│   ├── app.module.ts
-│   └── main.ts         # Entry point
-├── prisma/
-│   ├── schema.prisma   # Database schema
-│   ├── seed.ts         # Seed data
-│   └── migrations/     # Database migrations
-└── docker-compose.yml  # PostgreSQL container
+src/
+├── auth/
+├── story/
+├── ai/
+├── document/
+├── dto/
+└── main.ts
+prisma/
+├── schema.prisma
+├── seed.ts
+└── migrations/
 ```
+
+---
 
 ## Troubleshooting
 
-### Database connection error
-- Kiểm tra Docker container đang chạy: `docker ps`
-- Kiểm tra `.env` có đúng `DATABASE_URL` không
+- Database connection error: kiểm tra docker ps và DATABASE_URL
+- Reset database (dev only):
+```bash
+npx prisma migrate reset
+```
+- Port conflict: đổi PORT trong .env hoặc src/main.ts
 
-### Migration error
-- Reset database: `npx prisma migrate reset`
-- Chạy lại migration: `npx prisma migrate dev`
+---
 
-### Port 3000 đã được sử dụng
-- Đổi port trong `src/main.ts` hoặc set `PORT` trong `.env`
+## Summary
+
+Storyforge là hệ thống AI hỗ trợ tạo User Story, trong đó AI sinh bản nháp và người dùng quyết định bản cuối.

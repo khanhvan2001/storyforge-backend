@@ -18,4 +18,3 @@ export class UpdateDocumentDto {
   @ApiProperty({ description: 'Document content text', required: false })
   contentText?: string;
 }
-

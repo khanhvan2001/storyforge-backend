@@ -13,7 +13,46 @@ export class AiService {
     return this.gemini;
   }
 
-  async generate(rawInput: string) {
+  async generateUserStory(idea: string, userRequirements: string, attachedContent: string, referenceContent: string) {
+    const systemPrompt = `You are a Senior Product Owner specialized in Agile User Stories.
+
+Strict requirements:
+- User Story format: As a [persona], I want [feature] so that [benefit].
+- Follow INVEST principle.
+- Acceptance Criteria must use Gherkin (Given-When-Then).
+- At least 3–5 acceptance criteria.
+- Output MUST be valid JSON ONLY.
+
+JSON schema:
+{
+  "userStory": "...",
+  "acceptanceCriteria": ["..."],
+  "notes": "..."
+}`;
+
+    const userPrompt = `Idea: ${idea}
+
+User Requirements: ${userRequirements}
+
+Attached Content: ${attachedContent || 'Không có'}
+
+Reference Content: ${referenceContent || 'Không có'}
+
+Generate a high-quality User Story following the requirements above. Return only valid JSON, no other text.`;
+
+    // Estimate token count (rough: 1 token ≈ 4 characters)
+    const totalLength = systemPrompt.length + userPrompt.length;
+    if (totalLength > 128000) {
+      // Truncate if too long
+      const maxUserPromptLength = 128000 - systemPrompt.length;
+      const truncated = userPrompt.substring(0, maxUserPromptLength);
+      return this.generateUserStoryWithPrompt(systemPrompt, truncated);
+    }
+
+    return this.generateUserStoryWithPrompt(systemPrompt, userPrompt);
+  }
+
+  private async generateUserStoryWithPrompt(systemPrompt: string, userPrompt: string, retryCount = 0): Promise<any> {
     try {
       const client = this.getGeminiClient();
       if (!client) {
@@ -22,17 +61,10 @@ export class AiService {
 
       const model = client.getGenerativeModel({
         model: this.GEMINI_MODEL,
+        systemInstruction: systemPrompt,
       });
 
-      const prompt = `You are an Agile Product Owner. Generate a user story from the input. Respond in the same language as the input.
-
-Return JSON with: title (string), userStory (string), acceptanceCriteria (string array).
-
-Input: ${rawInput}
-
-Important: Use the same language as the input text. Return only valid JSON with camelCase field names, no other text.`;
-
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent(userPrompt);
       const response = await result.response;
       const content = response.text();
 
@@ -44,22 +76,26 @@ Important: Use the same language as the input text. Return only valid JSON with 
       const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const parsed = JSON.parse(cleanedContent);
       
-      // Transform to camelCase (support both snake_case and camelCase from AI)
       return {
-        title: parsed.title,
-        userStory: parsed.userStory || parsed.user_story,
-        acceptanceCriteria: parsed.acceptanceCriteria || parsed.acceptance_criteria,
+        userStory: parsed.userStory || '',
+        acceptanceCriteria: parsed.acceptanceCriteria || parsed.acceptance_criteria || [],
+        notes: parsed.notes || '',
       };
     } catch (error) {
       console.error('AI generation error:', error);
+      
+      // Retry once if first attempt fails
+      if (retryCount === 0) {
+        return this.generateUserStoryWithPrompt(systemPrompt, userPrompt, 1);
+      }
+      
+      // Return fallback on retry failure
       return {
-        title: 'Sample Story',
         userStory: 'As a user, I want to perform an action so that I can achieve a goal.',
         acceptanceCriteria: [
-          'User can perform the action',
-          'Goal is achieved',
-          'System responds correctly',
+          'Given a scenario, When an action is performed, Then the expected outcome occurs',
         ],
+        notes: 'Generated with fallback due to AI error',
       };
     }
   }

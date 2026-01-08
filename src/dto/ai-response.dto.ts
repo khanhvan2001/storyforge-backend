@@ -24,7 +24,3 @@ export class AiOutputJsonDto {
   })
   acceptanceCriteria: string[];
 }
-
-// Alias for backward compatibility
-export class GenerateResponseDto extends AiOutputJsonDto {}
-

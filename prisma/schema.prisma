@@ -19,16 +19,21 @@ model User {
 }
 
 model Story {
-  id           Int        @id @default(autoincrement())
-  title        String
-  rawInput     String     @map("raw_input")
-  aiOutputJson String     @map("ai_output_json") @db.Text
-  status       String
-  userId       Int        @map("user_id")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documents    Document[]
+  id                 Int        @id @default(autoincrement())
+  title              String
+  rawInput           String     @map("raw_input")
+  generatedUserStory Json?      @map("generated_user_story")
+  finalUserStory     Json?      @map("final_user_story")
+  status             String
+  userId             Int        @map("user_id")
+  idea               String?    @db.Text
+  userRequirements   String?    @map("user_requirements") @db.Text
+  attachedFiles      Json?      @map("attached_files")
+  referenceLinks     String[]   @default([]) @map("reference_links")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+  user               User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents          Document[]
 
   @@map("story")
 }

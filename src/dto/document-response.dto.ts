@@ -19,4 +19,3 @@ export class DocumentResponseDto {
   @ApiProperty({ description: 'Updated at', example: '2024-01-01T00:00:00.000Z' })
   updatedAt: Date;
 }
-
