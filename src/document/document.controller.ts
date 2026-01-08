@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam, ApiBearerAuth } 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DocumentService } from './document.service';
 import { CreateDocumentDto, UpdateDocumentDto } from '../dto/document.dto';
+import { DocumentResponseDto } from '../dto/document-response.dto';
 
 @ApiTags('documents')
 @ApiBearerAuth('JWT-auth')
@@ -28,14 +29,7 @@ export class DocumentController {
   @ApiResponse({
     status: 201,
     description: 'Document created successfully',
-    example: {
-      id: 1,
-      title: 'API Documentation',
-      content_text: 'This document describes the API endpoints...',
-      story_id: 1,
-      created_at: '2024-01-01T00:00:00.000Z',
-      updated_at: '2024-01-01T00:00:00.000Z',
-    },
+    type: DocumentResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Request() req, @Body() body: CreateDocumentDto) {
@@ -47,16 +41,7 @@ export class DocumentController {
   @ApiResponse({
     status: 200,
     description: 'Returns all documents',
-    example: [
-      {
-        id: 1,
-        title: 'API Documentation',
-        content_text: 'This document describes the API endpoints...',
-        story_id: 1,
-        created_at: '2024-01-01T00:00:00.000Z',
-        updated_at: '2024-01-01T00:00:00.000Z',
-      },
-    ],
+    type: [DocumentResponseDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   findAll(@Request() req) {
@@ -69,14 +54,7 @@ export class DocumentController {
   @ApiResponse({
     status: 200,
     description: 'Returns the document',
-    example: {
-      id: 1,
-      title: 'API Documentation',
-      content_text: 'This document describes the API endpoints...',
-      story_id: 1,
-      created_at: '2024-01-01T00:00:00.000Z',
-      updated_at: '2024-01-01T00:00:00.000Z',
-    },
+    type: DocumentResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Document not found' })
@@ -88,7 +66,11 @@ export class DocumentController {
   @ApiOperation({ summary: 'Update a document' })
   @ApiParam({ name: 'id', type: 'number', description: 'Document ID' })
   @ApiBody({ type: UpdateDocumentDto })
-  @ApiResponse({ status: 200, description: 'Document updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Document updated successfully',
+    type: DocumentResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Document not found' })
   update(@Request() req, @Param('id', ParseIntPipe) id: number, @Body() body: UpdateDocumentDto) {

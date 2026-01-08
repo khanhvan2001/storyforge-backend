@@ -26,11 +26,11 @@ export class AiService {
 
       const prompt = `You are an Agile Product Owner. Generate a user story from the input. Respond in the same language as the input.
 
-Return JSON with: title (string), user_story (string), acceptance_criteria (string array).
+Return JSON with: title (string), userStory (string), acceptanceCriteria (string array).
 
 Input: ${rawInput}
 
-Important: Use the same language as the input text. Return only valid JSON, no other text.`;
+Important: Use the same language as the input text. Return only valid JSON with camelCase field names, no other text.`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -42,13 +42,20 @@ Important: Use the same language as the input text. Return only valid JSON, no o
 
       // Clean up the response (remove markdown code blocks if present)
       const cleanedContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      return JSON.parse(cleanedContent);
+      const parsed = JSON.parse(cleanedContent);
+      
+      // Transform to camelCase (support both snake_case and camelCase from AI)
+      return {
+        title: parsed.title,
+        userStory: parsed.userStory || parsed.user_story,
+        acceptanceCriteria: parsed.acceptanceCriteria || parsed.acceptance_criteria,
+      };
     } catch (error) {
       console.error('AI generation error:', error);
       return {
         title: 'Sample Story',
-        user_story: 'As a user, I want to perform an action so that I can achieve a goal.',
-        acceptance_criteria: [
+        userStory: 'As a user, I want to perform an action so that I can achieve a goal.',
+        acceptanceCriteria: [
           'User can perform the action',
           'Goal is achieved',
           'System responds correctly',

@@ -16,18 +16,9 @@ export class AiController {
     status: 200,
     description: 'AI content generated successfully',
     type: GenerateResponseDto,
-    example: {
-      title: 'User Login Feature',
-      user_story: 'As a user, I want to log in to the system so that I can access my account.',
-      acceptance_criteria: [
-        'User can enter username and password',
-        'System validates credentials',
-        'User is redirected to dashboard upon successful login',
-      ],
-    },
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async generate(@Body() body: GenerateDto) {
-    return this.aiService.generate(body.raw_input);
+    return this.aiService.generate(body.rawInput);
   }
 }

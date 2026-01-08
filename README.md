@@ -37,6 +37,7 @@ GEMINI_API_KEY="" # Lấy tại https://aistudio.google.com/app/apikey (miễn p
 - Nếu không có `GEMINI_API_KEY`, API sẽ trả về mock data
 - **Google Gemini**: Miễn phí, sử dụng model `gemini-2.5-flash` (hard-coded trong code)
 - Lấy API key miễn phí tại: https://aistudio.google.com/app/apikey
+- Tất cả API request/response fields đều sử dụng **camelCase** (ví dụ: `rawInput`, `aiOutputJson`, `contentText`)
 
 ### 4. Chạy migrations và seed data
 
@@ -66,27 +67,39 @@ Tại đây bạn có thể:
 
 ## API Endpoints
 
+**Lưu ý:** Tất cả request và response fields đều sử dụng **camelCase** format.
+
 ### Authentication
 - `POST /auth/register` - Đăng ký user mới
+  - Request: `{ username: string, password: string }`
+  - Response: `{ accessToken: string }`
 - `POST /auth/login` - Đăng nhập
+  - Request: `{ username: string, password: string }`
+  - Response: `{ accessToken: string }`
 
 ### Stories (JWT protected)
 - `GET /stories` - Lấy danh sách stories
 - `POST /stories` - Tạo story mới
+  - Request: `{ title: string, rawInput: string, aiOutputJson: object, status: string }`
 - `GET /stories/:id` - Lấy chi tiết story
 - `PUT /stories/:id` - Cập nhật story
+  - Request: `{ title?: string, rawInput?: string, aiOutputJson?: object, status?: string }`
 - `DELETE /stories/:id` - Xóa story
 - `GET /stories/:id/documents` - Lấy documents của story
 
 ### Documents (JWT protected)
 - `GET /documents` - Lấy danh sách documents
 - `POST /documents` - Tạo document mới
+  - Request: `{ title: string, contentText: string, storyId: number }`
 - `GET /documents/:id` - Lấy chi tiết document
 - `PUT /documents/:id` - Cập nhật document
+  - Request: `{ title?: string, contentText?: string }`
 - `DELETE /documents/:id` - Xóa document
 
 ### AI
 - `POST /ai/generate` - Generate user story từ raw input
+  - Request: `{ rawInput: string }`
+  - Response: `{ title: string, userStory: string, acceptanceCriteria: string[] }`
 
 ## Seed Data
 
@@ -102,6 +115,7 @@ Tất cả users đều dùng password: `123456`
 - **ORM:** Prisma
 - **Migrations:** `npx prisma migrate dev`
 - **Prisma Studio:** `npx prisma studio` (GUI để xem database)
+- **Schema:** Prisma models sử dụng camelCase, database columns sử dụng snake_case (tự động map qua `@map`)
 
 ## Scripts
 
@@ -147,9 +161,13 @@ storyforge-backend/
 │   │   └── ai.module.ts
 │   ├── dto/            # Data Transfer Objects
 │   │   ├── auth.dto.ts
+│   │   ├── auth-response.dto.ts
 │   │   ├── story.dto.ts
+│   │   ├── story-response.dto.ts
 │   │   ├── document.dto.ts
-│   │   └── ai.dto.ts
+│   │   ├── document-response.dto.ts
+│   │   ├── ai.dto.ts
+│   │   └── ai-response.dto.ts
 │   ├── app.controller.ts
 │   ├── app.module.ts
 │   └── main.ts         # Entry point

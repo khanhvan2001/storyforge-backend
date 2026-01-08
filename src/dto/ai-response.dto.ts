@@ -11,7 +11,7 @@ export class AiOutputJsonDto {
     description: 'User story description',
     example: 'As a user, I want to log in to the system so that I can access my account.',
   })
-  user_story: string;
+  userStory: string;
 
   @ApiProperty({
     description: 'Acceptance criteria',
@@ -22,7 +22,7 @@ export class AiOutputJsonDto {
     ],
     type: [String],
   })
-  acceptance_criteria: string[];
+  acceptanceCriteria: string[];
 }
 
 // Alias for backward compatibility

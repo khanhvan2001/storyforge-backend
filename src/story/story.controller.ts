@@ -16,6 +16,7 @@ import { DocumentService } from '../document/document.service';
 import { StoryService } from './story.service';
 import { CreateStoryDto, UpdateStoryDto } from '../dto/story.dto';
 import { StoryResponseDto } from '../dto/story-response.dto';
+import { DocumentResponseDto } from '../dto/document-response.dto';
 
 @ApiTags('stories')
 @ApiBearerAuth('JWT-auth')
@@ -58,16 +59,7 @@ export class StoryController {
   @ApiResponse({
     status: 200,
     description: 'Returns all documents for the story',
-    example: [
-      {
-        id: 1,
-        title: 'API Documentation',
-        content_text: 'This document describes the API endpoints...',
-        story_id: 1,
-        created_at: '2024-01-01T00:00:00.000Z',
-        updated_at: '2024-01-01T00:00:00.000Z',
-      },
-    ],
+    type: [DocumentResponseDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Story not found' })

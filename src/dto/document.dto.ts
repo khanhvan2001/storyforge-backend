@@ -5,10 +5,10 @@ export class CreateDocumentDto {
   title: string;
 
   @ApiProperty({ description: 'Document content text' })
-  content_text: string;
+  contentText: string;
 
   @ApiProperty({ description: 'Story ID that this document belongs to' })
-  story_id: number;
+  storyId: number;
 }
 
 export class UpdateDocumentDto {
@@ -16,6 +16,6 @@ export class UpdateDocumentDto {
   title?: string;
 
   @ApiProperty({ description: 'Document content text', required: false })
-  content_text?: string;
+  contentText?: string;
 }
 

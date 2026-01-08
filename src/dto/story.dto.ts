@@ -6,22 +6,22 @@ export class CreateStoryDto {
   title: string;
 
   @ApiProperty({ description: 'Raw input text' })
-  raw_input: string;
+  rawInput: string;
 
   @ApiProperty({
     description: 'AI output in JSON format',
     type: AiOutputJsonDto,
     example: {
       title: 'User Login Feature',
-      user_story: 'As a user, I want to log in to the system so that I can access my account.',
-      acceptance_criteria: [
+      userStory: 'As a user, I want to log in to the system so that I can access my account.',
+      acceptanceCriteria: [
         'User can enter username and password',
         'System validates credentials',
         'User is redirected to dashboard upon successful login',
       ],
     },
   })
-  ai_output_json: string | object | AiOutputJsonDto;
+  aiOutputJson: string | object | AiOutputJsonDto;
 
   @ApiProperty({ description: 'Story status' })
   status: string;
@@ -32,7 +32,7 @@ export class UpdateStoryDto {
   title?: string;
 
   @ApiProperty({ description: 'Raw input text', required: false })
-  raw_input?: string;
+  rawInput?: string;
 
   @ApiProperty({
     description: 'AI output in JSON format',
@@ -40,15 +40,15 @@ export class UpdateStoryDto {
     required: false,
     example: {
       title: 'User Login Feature',
-      user_story: 'As a user, I want to log in to the system so that I can access my account.',
-      acceptance_criteria: [
+      userStory: 'As a user, I want to log in to the system so that I can access my account.',
+      acceptanceCriteria: [
         'User can enter username and password',
         'System validates credentials',
         'User is redirected to dashboard upon successful login',
       ],
     },
   })
-  ai_output_json?: string | object | AiOutputJsonDto;
+  aiOutputJson?: string | object | AiOutputJsonDto;
 
   @ApiProperty({ description: 'Story status', required: false })
   status?: string;

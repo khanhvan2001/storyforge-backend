@@ -5,15 +5,19 @@ const prisma = new PrismaClient();
 
 @Injectable()
 export class DocumentService {
-  async create(userId: number, data: { title: string; content_text: string; story_id: number }) {
+  async create(userId: number, data: { title: string; contentText: string; storyId: number }) {
     const story = await prisma.story.findFirst({
-      where: { id: data.story_id, user_id: userId },
+      where: { id: data.storyId, userId: userId },
     });
     if (!story) {
       throw new Error('Story not found');
     }
     return prisma.document.create({
-      data,
+      data: {
+        title: data.title,
+        contentText: data.contentText,
+        storyId: data.storyId,
+      },
     });
   }
 
@@ -21,7 +25,7 @@ export class DocumentService {
     return prisma.document.findMany({
       where: {
         story: {
-          user_id: userId,
+          userId: userId,
         },
       },
     });
@@ -30,9 +34,9 @@ export class DocumentService {
   async findByStoryId(userId: number, storyId: number) {
     return prisma.document.findMany({
       where: {
-        story_id: storyId,
+        storyId: storyId,
         story: {
-          user_id: userId,
+          userId: userId,
         },
       },
     });
@@ -43,18 +47,18 @@ export class DocumentService {
       where: {
         id,
         story: {
-          user_id: userId,
+          userId: userId,
         },
       },
     });
   }
 
-  async update(userId: number, id: number, data: { title?: string; content_text?: string }) {
+  async update(userId: number, id: number, data: { title?: string; contentText?: string }) {
     const document = await prisma.document.findFirst({
       where: {
         id,
         story: {
-          user_id: userId,
+          userId: userId,
         },
       },
     });
@@ -72,7 +76,7 @@ export class DocumentService {
       where: {
         id,
         story: {
-          user_id: userId,
+          userId: userId,
         },
       },
     });

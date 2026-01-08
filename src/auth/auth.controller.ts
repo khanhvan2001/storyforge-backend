@@ -16,9 +16,6 @@ export class AuthController {
     status: 201,
     description: 'User successfully registered',
     type: AuthResponseDto,
-    example: {
-      access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE2MDAwMDAwMDB9.example',
-    },
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async register(@Body() body: RegisterDto) {
@@ -32,9 +29,6 @@ export class AuthController {
     status: 200,
     description: 'User successfully logged in',
     type: AuthResponseDto,
-    example: {
-      access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJpYXQiOjE2MDAwMDAwMDB9.example',
-    },
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async login(@Body() body: LoginDto) {

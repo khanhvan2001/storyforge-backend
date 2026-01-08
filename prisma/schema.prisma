@@ -8,27 +8,27 @@ datasource db {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  username   String   @unique
-  password   String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  stories    Story[]
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  stories   Story[]
 
   @@map("user")
 }
 
 model Story {
-  id            Int        @id @default(autoincrement())
-  title         String
-  raw_input     String
-  ai_output_json String     @db.Text
-  status        String
-  user_id       Int
-  created_at    DateTime   @default(now())
-  updated_at    DateTime   @updatedAt
-  user          User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  documents     Document[]
+  id           Int        @id @default(autoincrement())
+  title        String
+  rawInput     String     @map("raw_input")
+  aiOutputJson String     @map("ai_output_json") @db.Text
+  status       String
+  userId       Int        @map("user_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents    Document[]
 
   @@map("story")
 }
@@ -36,11 +36,11 @@ model Story {
 model Document {
   id          Int      @id @default(autoincrement())
   title       String
-  content_text String  @db.Text
-  story_id    Int
-  created_at  DateTime @default(now())
-  updated_at DateTime @updatedAt
-  story       Story    @relation(fields: [story_id], references: [id], onDelete: Cascade)
+  contentText String   @map("content_text") @db.Text
+  storyId     Int      @map("story_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  story       Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
   @@map("document")
 }
