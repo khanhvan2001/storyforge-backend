@@ -19,6 +19,7 @@ export class StoryService {
   async findAll(userId: number) {
     const stories = await prisma.story.findMany({
       where: { userId: userId },
+      orderBy: { createdAt: 'desc' },
     });
     return stories;
   }
