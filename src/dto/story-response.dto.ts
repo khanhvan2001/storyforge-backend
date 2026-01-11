@@ -58,6 +58,7 @@ export class StoryResponseDto {
         name: 'requirements.pdf',
         size: 1024,
         snippet: 'This document describes the login requirements...',
+        url: 'https://s3.filebase.com/storyforge-documents/stories/1/abc-123-requirements.pdf',
       },
     ],
     required: false,
@@ -66,6 +67,7 @@ export class StoryResponseDto {
     name: string;
     size: number;
     snippet: string;
+    url: string;
   }>;
 
   @ApiProperty({
