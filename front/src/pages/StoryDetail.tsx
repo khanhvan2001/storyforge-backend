@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import api from '@/lib/api'
-import { Story, GeneratedUserStory } from '@/lib/types'
-import { ArrowLeft, FileText, ExternalLink, Calendar, Edit, Save, X, Loader2, Download } from 'lucide-react'
+import { Story, GeneratedUserStory, Document } from '@/lib/types'
+import { ArrowLeft, FileText, ExternalLink, Calendar, Edit, Save, X, Loader2, Download, Upload, Plus, Trash2, Eye } from 'lucide-react'
 
 export default function StoryDetail() {
   const { id } = useParams<{ id: string }>()
@@ -18,11 +19,19 @@ export default function StoryDetail() {
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editedFinalStory, setEditedFinalStory] = useState<GeneratedUserStory | null>(null)
+  const [showCreateDocument, setShowCreateDocument] = useState(false)
+  const [documentTitle, setDocumentTitle] = useState('')
+  const [documentContent, setDocumentContent] = useState('')
+  const [documentFiles, setDocumentFiles] = useState<File[]>([])
+  const [creatingDocument, setCreatingDocument] = useState(false)
+  const [documents, setDocuments] = useState<Document[]>([])
+  const [loadingDocuments, setLoadingDocuments] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
     if (id) {
       fetchStory()
+      fetchDocuments()
     }
   }, [id])
 
@@ -46,6 +55,20 @@ export default function StoryDetail() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchDocuments = async () => {
+    if (!id) return
+    setLoadingDocuments(true)
+    try {
+      const response = await api.get(`/stories/${id}/documents`)
+      setDocuments(response.data)
+    } catch (err: any) {
+      // Silently fail - documents might not exist yet
+      setDocuments([])
+    } finally {
+      setLoadingDocuments(false)
     }
   }
 
@@ -190,6 +213,122 @@ export default function StoryDetail() {
     }
   }
 
+  const handleViewFile = async (fileUrl: string) => {
+    try {
+      const response = await api.get('/files/signed-url', {
+        params: { url: fileUrl },
+      })
+      window.open(response.data.signedUrl, '_blank')
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to open file'
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleDocumentFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files)
+      if (documentFiles.length + newFiles.length > 10) {
+        toast({
+          title: 'Error',
+          description: 'Maximum 10 files allowed',
+          variant: 'destructive',
+        })
+        return
+      }
+      setDocumentFiles([...documentFiles, ...newFiles])
+    }
+  }
+
+  const removeDocumentFile = (index: number) => {
+    setDocumentFiles(documentFiles.filter((_, i) => i !== index))
+  }
+
+  const handleCreateDocument = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!id || !documentTitle.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Document title is required',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setCreatingDocument(true)
+    setError('')
+
+    try {
+      const formData = new FormData()
+      formData.append('title', documentTitle)
+      if (documentContent.trim()) {
+        formData.append('contentText', documentContent)
+      }
+      formData.append('storyId', id)
+      documentFiles.forEach((file) => {
+        formData.append('files', file)
+      })
+
+      await api.post('/documents', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      toast({
+        title: 'Success',
+        description: 'Document created successfully!',
+        variant: 'success',
+      })
+
+      // Reset form
+      setDocumentTitle('')
+      setDocumentContent('')
+      setDocumentFiles([])
+      setShowCreateDocument(false)
+      // Refresh documents list
+      fetchDocuments()
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to create document'
+      setError(errorMessage)
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      })
+    } finally {
+      setCreatingDocument(false)
+    }
+  }
+
+  const handleDeleteDocument = async (documentId: number) => {
+    if (!confirm('Are you sure you want to delete this document?')) {
+      return
+    }
+
+    try {
+      await api.delete(`/documents/${documentId}`)
+      toast({
+        title: 'Success',
+        description: 'Document deleted successfully!',
+        variant: 'success',
+      })
+      // Refresh documents list
+      fetchDocuments()
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to delete document'
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -207,30 +346,31 @@ export default function StoryDetail() {
   }
 
   return (
-    <div>
-      <Button
-        variant="ghost"
-        onClick={() => navigate('/stories')}
-        className="mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Stories
-      </Button>
+    <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen py-8">
+      <div className="max-w-5xl mx-auto px-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/stories')}
+          className="mb-6 hover:bg-blue-100"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Stories
+        </Button>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-3xl">{story.title}</CardTitle>
-            <CardDescription className="flex items-center gap-4 mt-2">
-              <span className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                {new Date(story.createdAt).toLocaleDateString()}
-              </span>
-              <span className="px-2 py-1 bg-secondary rounded text-xs">
-                {story.status}
-              </span>
-            </CardDescription>
-          </CardHeader>
+        <div className="space-y-6">
+          <Card className="shadow-xl border-2 border-blue-100 bg-gradient-to-br from-white to-blue-50/50">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+              <CardTitle className="text-3xl text-white">{story.title}</CardTitle>
+              <CardDescription className="flex items-center gap-4 mt-2 text-blue-100">
+                <span className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  {new Date(story.createdAt).toLocaleDateString()}
+                </span>
+                <span className="px-3 py-1 bg-white/20 backdrop-blur rounded-full text-xs font-medium">
+                  {story.status}
+                </span>
+              </CardDescription>
+            </CardHeader>
           <CardContent className="space-y-4">
             {story.idea && (
               <div>
@@ -281,15 +421,24 @@ export default function StoryDetail() {
                           </p>
                         </div>
                         {file.url && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownload(file.url!, file.name)}
-                            className="ml-4"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </Button>
+                          <div className="flex gap-2 ml-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewFile(file.url!)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownload(file.url!, file.name)}
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </Card>
@@ -338,25 +487,25 @@ export default function StoryDetail() {
         )}
 
         {(story.finalUserStory || story.generatedUserStory) && editedFinalStory && (
-          <Card>
-            <CardHeader>
+          <Card className="shadow-lg border-2 border-green-100 bg-gradient-to-br from-white to-green-50/50">
+            <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-t-lg">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Final User Story</CardTitle>
-                  <CardDescription>Editable final version</CardDescription>
+                  <CardTitle className="text-white">Final User Story</CardTitle>
+                  <CardDescription className="text-green-100">Editable final version</CardDescription>
                 </div>
                 {!isEditing ? (
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
+                  <Button variant="outline" size="sm" onClick={handleEdit} className="bg-white/20 hover:bg-white/30 text-white border-white/30">
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving}>
+                    <Button variant="outline" size="sm" onClick={handleCancel} disabled={saving} className="bg-white/20 hover:bg-white/30 text-white border-white/30">
                       <X className="h-4 w-4 mr-2" />
                       Cancel
                     </Button>
-                    <Button size="sm" onClick={handleSave} disabled={saving}>
+                    <Button size="sm" onClick={handleSave} disabled={saving} className="bg-white text-green-600 hover:bg-green-50">
                       {saving ? (
                         <>
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -457,6 +606,185 @@ export default function StoryDetail() {
             </CardContent>
           </Card>
         )}
+
+        {/* Documents Section */}
+        <Card className="shadow-lg border-2 border-orange-100 bg-gradient-to-br from-white to-orange-50/50">
+          <CardHeader className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-white">Documentation</CardTitle>
+                <CardDescription className="text-orange-100">Documents created for this story</CardDescription>
+              </div>
+              {!showCreateDocument && (
+                <Button variant="outline" size="sm" onClick={() => setShowCreateDocument(true)} className="bg-white/20 hover:bg-white/30 text-white border-white/30">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Document
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingDocuments ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : documents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No documents yet. Create your first document to get started.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {documents.map((document) => (
+                  <Card key={document.id} className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-2">{document.title}</h3>
+                        {document.contentText && (
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
+                            {document.contentText}
+                          </p>
+                        )}
+                        {document.attachedFiles && document.attachedFiles.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Attached Files ({document.attachedFiles.length}):
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {document.attachedFiles.map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 px-2 py-1 bg-secondary rounded text-xs"
+                                >
+                                  <FileText className="h-3 w-3" />
+                                  <span>{file.originalName}</span>
+                                  {file.url && (
+                                    <button
+                                      onClick={() => handleViewFile(file.url!)}
+                                      className="text-primary hover:underline cursor-pointer"
+                                      title="View file"
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-3">
+                          Created: {new Date(document.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteDocument(document.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+            {showCreateDocument && (
+              <div className="border-t pt-6 mt-6">
+                <form onSubmit={handleCreateDocument} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="documentTitle">Document Title *</Label>
+                  <Input
+                    id="documentTitle"
+                    value={documentTitle}
+                    onChange={(e) => setDocumentTitle(e.target.value)}
+                    required
+                    placeholder="e.g., Project Requirements Document"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="documentContent">Content (optional)</Label>
+                  <Textarea
+                    id="documentContent"
+                    value={documentContent}
+                    onChange={(e) => setDocumentContent(e.target.value)}
+                    rows={5}
+                    placeholder="Enter document content..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="documentFiles">Attach Files (optional, max 10)</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      id="documentFiles"
+                      type="file"
+                      multiple
+                      onChange={handleDocumentFileChange}
+                      accept=".txt,.md,.pdf,.docx"
+                      className="cursor-pointer"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Supported: .txt, .md, .pdf, .docx
+                    </span>
+                  </div>
+                  {documentFiles.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                      {documentFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 bg-secondary rounded-md"
+                        >
+                          <span className="text-sm">{file.name}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeDocumentFile(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowCreateDocument(false)
+                      setDocumentTitle('')
+                      setDocumentContent('')
+                      setDocumentFiles([])
+                    }}
+                    disabled={creatingDocument}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={creatingDocument} className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white">
+                    {creatingDocument ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Create Document
+                      </>
+                    )}
+                  </Button>
+                </div>
+                </form>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        </div>
       </div>
     </div>
   )

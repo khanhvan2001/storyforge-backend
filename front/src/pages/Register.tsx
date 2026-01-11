@@ -49,14 +49,16 @@ export default function Register({ onRegister }: RegisterProps) {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+      <Card className="w-full max-w-md shadow-2xl border-2 border-purple-100 bg-white/95 backdrop-blur">
+        <CardHeader className="text-center bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-t-lg">
           <div className="flex justify-center mb-4">
-            <BookOpen className="h-12 w-12 text-primary" />
+            <div className="p-3 rounded-full bg-white/20 backdrop-blur">
+              <BookOpen className="h-12 w-12 text-white" />
+            </div>
           </div>
-          <CardTitle className="text-2xl">Create Account</CardTitle>
-          <CardDescription>Sign up to start creating stories</CardDescription>
+          <CardTitle className="text-2xl text-white">Create Account</CardTitle>
+          <CardDescription className="text-purple-100">Sign up to start creating stories</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -87,7 +89,7 @@ export default function Register({ onRegister }: RegisterProps) {
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white" disabled={loading}>
               {loading ? 'Creating account...' : 'Sign Up'}
             </Button>
           </form>

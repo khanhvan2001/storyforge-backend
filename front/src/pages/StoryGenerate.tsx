@@ -81,23 +81,24 @@ export default function StoryGenerate() {
   }
 
   return (
-    <div>
-      <Button
-        variant="ghost"
-        onClick={() => navigate('/stories')}
-        className="mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Stories
-      </Button>
+    <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen py-8">
+      <div className="max-w-3xl mx-auto px-4">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/stories')}
+          className="mb-6 hover:bg-blue-100"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Stories
+        </Button>
 
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl">Generate New User Story</CardTitle>
-          <CardDescription>
-            Use AI to generate a user story from your idea and requirements
-          </CardDescription>
-        </CardHeader>
+        <Card className="shadow-2xl border-2 border-blue-100 bg-white/95 backdrop-blur">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
+            <CardTitle className="text-2xl text-white">Generate New User Story</CardTitle>
+            <CardDescription className="text-blue-100">
+              Use AI to generate a user story from your idea and requirements
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -189,7 +190,7 @@ export default function StoryGenerate() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -205,7 +206,8 @@ export default function StoryGenerate() {
             </div>
           </form>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   )
 }
