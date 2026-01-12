@@ -650,24 +650,41 @@ export default function StoryDetail() {
                             <p className="text-xs font-medium text-muted-foreground">
                               Attached Files ({document.attachedFiles.length}):
                             </p>
-                            <div className="flex flex-wrap gap-2">
+                            <div className="space-y-2">
                               {document.attachedFiles.map((file, index) => (
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-2 px-2 py-1 bg-secondary rounded text-xs"
-                                >
-                                  <FileText className="h-3 w-3" />
-                                  <span>{file.originalName}</span>
-                                  {file.url && (
-                                    <button
-                                      onClick={() => handleViewFile(file.url!)}
-                                      className="text-primary hover:underline cursor-pointer"
-                                      title="View file"
-                                    >
-                                      <ExternalLink className="h-3 w-3" />
-                                    </button>
-                                  )}
-                                </div>
+                                <Card key={index} className="p-3">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4 text-blue-500" />
+                                        <p className="font-medium text-sm">{file.originalName}</p>
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {(file.size / 1024).toFixed(2)} KB
+                                      </p>
+                                    </div>
+                                    {file.url && (
+                                      <div className="flex gap-2 ml-4">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleViewFile(file.url!)}
+                                        >
+                                          <Eye className="h-4 w-4 mr-2" />
+                                          View
+                                        </Button>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleDownload(file.url!, file.originalName)}
+                                        >
+                                          <Download className="h-4 w-4 mr-2" />
+                                          Download
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </Card>
                               ))}
                             </div>
                           </div>
