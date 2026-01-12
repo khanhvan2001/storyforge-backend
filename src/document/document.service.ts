@@ -130,8 +130,7 @@ export class DocumentService {
             Bucket: process.env.FILEBASE_BUCKET!,
             Key: fileKey,
             Body: file.buffer,
-            ContentType: file.mimetype,
-            ACL: 'public-read',
+            ContentType: file.mimetype
           }),
         );
 
