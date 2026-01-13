@@ -425,14 +425,6 @@ export default function StoryDetail() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleViewFile(file.url!)}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
                               onClick={() => handleDownload(file.url!, file.name)}
                             >
                               <Download className="h-4 w-4 mr-2" />
@@ -665,14 +657,6 @@ export default function StoryDetail() {
                                     </div>
                                     {file.url && (
                                       <div className="flex gap-2 ml-4">
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => handleViewFile(file.url!)}
-                                        >
-                                          <Eye className="h-4 w-4 mr-2" />
-                                          View
-                                        </Button>
                                         <Button
                                           variant="outline"
                                           size="sm"
