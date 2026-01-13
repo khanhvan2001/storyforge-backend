@@ -51,3 +51,9 @@ export interface Document {
   updatedAt: string;
 }
 
+export interface ClarifyingQuestion {
+  id: string;
+  question_text: string;
+  type: 'single_choice' | 'multiple_choice';
+  options: string[];
+}

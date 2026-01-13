@@ -13,7 +13,15 @@ import {
   UploadedFiles,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express/multer';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DocumentService } from '../document/document.service';
 import { StoryService } from './story.service';
@@ -82,7 +90,11 @@ export class StoryController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Story not found' })
-  update(@Request() req, @Param('id', ParseIntPipe) id: number, @Body() body: UpdateStoryDto) {
+  update(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateStoryDto,
+  ) {
     return this.storyService.update(req.user.userId, id, body);
   }
 
@@ -100,7 +112,8 @@ export class StoryController {
   @UseInterceptors(FilesInterceptor('files', 10))
   @ApiOperation({
     summary: 'Generate a user story from idea, requirements, files, and links',
-    description: 'Generate a user story using AI (Gemini) based on idea, user requirements, attached files, and reference links. Supports file types: .txt, .md, .pdf, .docx. Maximum 10 files, total content truncated to 20,000 characters.',
+    description:
+      'Generate a user story using AI (Gemini) based on idea, user requirements, attached files, and reference links. Supports file types: .txt, .md, .pdf, .docx. Maximum 10 files, total content truncated to 20,000 characters.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -115,7 +128,8 @@ export class StoryController {
         userRequirements: {
           type: 'string',
           description: 'User requirements (required)',
-          example: 'Must support email and username login, password reset functionality',
+          example:
+            'Must support email and username login, password reset functionality',
         },
         referenceLinks: {
           type: 'string',
@@ -125,7 +139,8 @@ export class StoryController {
         files: {
           type: 'array',
           items: { type: 'string', format: 'binary' },
-          description: 'Upload files - supported formats: .txt, .md, .pdf, .docx (optional, max 10 files)',
+          description:
+            'Upload files - supported formats: .txt, .md, .pdf, .docx (optional, max 10 files)',
         },
       },
       required: ['idea', 'userRequirements'],
@@ -133,18 +148,26 @@ export class StoryController {
   })
   @ApiResponse({
     status: 201,
-    description: 'User story generated successfully. Returns Story object with generatedUserStory (AI-generated, read-only) and finalUserStory (editable) fields containing user story, acceptance criteria, and notes.',
+    description:
+      'User story generated successfully. Returns Story object with generatedUserStory (AI-generated, read-only) and finalUserStory (editable) fields containing user story, acceptance criteria, and notes.',
     type: StoryResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 400, description: 'Bad request - invalid file format or missing required fields' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad request - invalid file format or missing required fields',
+  })
   async generate(
     @Request() req,
-    @Body() body: { idea: string; userRequirements: string; referenceLinks?: string },
+    @Body()
+    body: { idea: string; userRequirements: string; referenceLinks?: string },
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
     const referenceLinks = body.referenceLinks
-      ? body.referenceLinks.split(',').map(link => link.trim()).filter(link => link.length > 0)
+      ? body.referenceLinks
+          .split(',')
+          .map((link) => link.trim())
+          .filter((link) => link.length > 0)
       : undefined;
 
     return this.storyService.generate(
@@ -152,7 +175,94 @@ export class StoryController {
       body.idea,
       body.userRequirements,
       files,
+    );
+  }
+
+  @Post('refine')
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Generate clarifying questions (with optional files/links)',
+    description:
+      'Analyzes the idea, requirements, files, and links to generate clarifying questions.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        idea: { type: 'string' },
+        userRequirements: { type: 'string' },
+        referenceLinks: { type: 'string', description: 'Comma-separated URLs' },
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+      required: ['idea', 'userRequirements'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns a list of clarifying questions',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          question_text: { type: 'string' },
+          type: { type: 'string', enum: ['single_choice', 'multiple_choice'] },
+          options: { type: 'array', items: { type: 'string' } },
+        },
+      },
+    },
+  })
+  async refine(
+    @Request() req,
+    @Body()
+    body: { idea: string; userRequirements: string; referenceLinks?: string },
+    @UploadedFiles() files?: Express.Multer.File[],
+  ) {
+    const referenceLinks = body.referenceLinks
+      ? body.referenceLinks
+          .split(',')
+          .map((link) => link.trim())
+          .filter((link) => link.length > 0)
+      : undefined;
+
+    return this.storyService.refine(
+      req.user.userId,
+      body.idea,
+      body.userRequirements,
+      files,
       referenceLinks,
     );
+  }
+
+  @Post(':id/edit-with-ai')
+  @ApiOperation({ summary: 'Edit specific story with AI instruction' })
+  @ApiParam({ name: 'id', type: 'number', description: 'Story ID' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        instruction: {
+          type: 'string',
+          example: 'Translate to Vietnamese',
+        },
+      },
+      required: ['instruction'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the updated User Story JSON (not saved yet)',
+  })
+  async editWithAi(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { instruction: string },
+  ) {
+    return this.storyService.editWithAi(req.user.userId, id, body.instruction);
   }
 }

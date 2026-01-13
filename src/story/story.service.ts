@@ -185,4 +185,66 @@ export class StoryService {
       return story;
     });
   }
+
+  async refine(
+    userId: number,
+    idea: string,
+    userRequirements: string,
+    files?: Express.Multer.File[],
+    referenceLinks?: string[],
+  ) {
+    // 1. Extract text from files
+    let attachedContent = '';
+    if (files && files.length > 0) {
+      const extractedTexts: string[] = [];
+      for (const file of files) {
+        try {
+          const text = await this.fileExtractionService.extractText(file);
+          if (text)
+            extractedTexts.push(`--- File: ${file.originalname} ---\n${text}`);
+        } catch (error) {
+          console.error(
+            `Failed to extract text from ${file.originalname}:`,
+            error,
+          );
+        }
+      }
+      attachedContent = extractedTexts.join('\n\n');
+    }
+
+    // 2. Extract content from links
+    let referenceContent = '';
+    if (referenceLinks && referenceLinks.length > 0) {
+      try {
+        referenceContent = referenceContent =
+          await this.linkExtractionService.extractTextFromLinks(referenceLinks);
+      } catch (error) {
+        console.error('Failed to extract links:', error);
+      }
+    }
+
+    // 3. Call AI with context
+    return this.aiService.generateClarifyingQuestions(
+      idea,
+      userRequirements,
+      attachedContent,
+      referenceContent,
+    );
+  }
+
+  async editWithAi(userId: number, storyId: number, instruction: string) {
+    const story = await this.findOne(userId, storyId);
+    if (!story) {
+      throw new Error('Story not found');
+    }
+
+    // Use finalUserStory if it exists, otherwise generatedUserStory
+    const currentStory = story.finalUserStory || story.generatedUserStory;
+
+    if (!currentStory) {
+      throw new Error('No user story content to edit');
+    }
+
+    return this.aiService.editUserStory(currentStory, instruction);
+  }
 }
